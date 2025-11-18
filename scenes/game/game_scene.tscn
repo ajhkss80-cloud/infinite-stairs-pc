@@ -5,14 +5,46 @@
 [node name="GameScene" type="Node2D"]
 script = ExtResource("1")
 
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="BackgroundColor" type="ColorRect" parent="Background"]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="StarContainer" type="Node2D" parent="Background"]
+
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="ScoreLabel" type="Label" parent="HUD"]
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 200.0
-offset_bottom = 60.0
+offset_bottom = 50.0
 text = "Score: 0"
+
+[node name="StairsLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 55.0
+offset_right = 200.0
+offset_bottom = 85.0
+text = "Stairs: 0"
+
+[node name="ComboLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 90.0
+offset_right = 200.0
+offset_bottom = 120.0
+text = "Combo: 0"
+
+[node name="DifficultyLabel" type="Label" parent="HUD"]
+offset_left = 1060.0
+offset_top = 20.0
+offset_right = 1260.0
+offset_bottom = 50.0
+text = "NORMAL"
+horizontal_alignment = 2
 
 [node name="TimerBar" type="ProgressBar" parent="HUD"]
 offset_left = 340.0

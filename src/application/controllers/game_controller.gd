@@ -12,6 +12,7 @@ var _stair_generator: StairGenerator
 var _score_calculator: ScoreCalculator
 var _stair_validator: StairValidator
 var _save_service: SaveService
+var _sound_manager: Node  # SoundManager from Application Layer
 
 
 # ==================== Game State ====================
@@ -36,6 +37,10 @@ func _init() -> void:
 	_stair_validator = StairValidator.new()
 	_save_service = SaveService.new()
 
+	# Load SoundManager dynamically
+	var SoundManager = load("res://src/application/services/sound_manager.gd")
+	_sound_manager = SoundManager.new()
+
 
 # ==================== Public Methods ====================
 
@@ -56,6 +61,9 @@ func start_game(difficulty: int) -> void:
 	_stair_generator.reset()
 	_current_stair = _stair_generator.generate_next_stair()
 
+	# Start background music
+	_sound_manager.play_bgm("theme_music")
+
 
 ## Process player input
 func process_input(input_direction: int) -> void:
@@ -69,11 +77,19 @@ func process_input(input_direction: int) -> void:
 	if not validation.success:
 		# Wrong input - game over
 		_is_game_over = true
+		_sound_manager.play_sfx("wrong_step")
 		return
 
 	# Correct input - update state
 	_stairs_climbed += 1
 	_consecutive_success += 1
+
+	# Play correct step sound
+	_sound_manager.play_sfx("correct_step")
+
+	# Check for combo milestone (every 10 consecutive successes)
+	if _consecutive_success > 0 and _consecutive_success % 10 == 0:
+		_sound_manager.play_sfx("combo_bonus")
 
 	# Calculate score for this stair
 	var stair_score = _score_calculator.calculate_total_score(
@@ -103,6 +119,7 @@ func update(delta: float) -> void:
 	# Check timeout
 	if _elapsed_time >= _input_timeout:
 		_is_game_over = true
+		_sound_manager.play_sfx("game_over")
 
 
 ## Get current score
@@ -152,3 +169,18 @@ func save_if_high_score() -> bool:
 		_save_service.save_high_score(_current_difficulty, _current_score)
 		return true
 	return false
+
+
+## Get sound manager for external access (e.g., UI sound effects)
+func get_sound_manager():
+	return _sound_manager
+
+
+## Get consecutive success count (for UI combo display)
+func get_consecutive_success() -> int:
+	return _consecutive_success
+
+
+## Get stairs climbed count
+func get_stairs_climbed() -> int:
+	return _stairs_climbed
