@@ -4,6 +4,8 @@
 
 class_name StairGenerator
 
+const ObstacleFactory = preload("res://src/core/obstacle/obstacle_factory.gd")
+
 # ==================== Constants ====================
 
 const MAX_CONSECUTIVE_SAME_DIRECTION = 5
@@ -23,12 +25,19 @@ var _consecutive_count: int = 0
 ## Random number generator
 var _rng: RandomNumberGenerator
 
+## Obstacle factory for generating obstacles
+var _obstacle_factory: ObstacleFactory
+
+## Current difficulty level
+var _current_difficulty: int = -1
+
 
 # ==================== Constructor ====================
 
 func _init() -> void:
 	_rng = RandomNumberGenerator.new()
 	_rng.randomize()
+	_obstacle_factory = ObstacleFactory.new()
 
 
 # ==================== Public Methods ====================
@@ -37,7 +46,13 @@ func _init() -> void:
 ## Returns a new Stair instance
 func generate_next_stair() -> Stair:
 	var direction = _determine_next_direction()
-	var stair = Stair.new(direction, _current_index)
+
+	# Generate obstacle if difficulty is set
+	var obstacle = null
+	if _current_difficulty >= 0:
+		obstacle = _obstacle_factory.generate_obstacle(_current_difficulty)
+
+	var stair = Stair.new(direction, _current_index, obstacle)
 
 	# Update internal state
 	_update_state(direction)
@@ -55,6 +70,11 @@ func reset() -> void:
 ## Set random seed for reproducible generation
 func set_random_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
+
+
+## Set difficulty level for obstacle generation
+func set_difficulty(difficulty: int) -> void:
+	_current_difficulty = difficulty
 
 
 # ==================== Private Methods ====================

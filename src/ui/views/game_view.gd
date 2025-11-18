@@ -62,18 +62,36 @@ func _input(event):
 
 
 func _process_player_input(direction: int):
+	const ObstacleType = preload("res://src/core/obstacle/obstacle_type.gd")
+
 	var prev_score = game_controller.get_current_score()
 	var prev_combo = game_controller.get_consecutive_success()
+
+	# Check for obstacle before processing (for visual feedback)
+	var current_stair = game_controller.get_current_stair()
+	var had_obstacle = current_stair.has_obstacle()
+	var obstacle_type = current_stair.obstacle.type if had_obstacle else -1
 
 	game_controller.process_input(direction)
 
 	if game_controller.is_game_over():
+		# Show obstacle message if game over was caused by SPIKE
+		if had_obstacle and obstacle_type == ObstacleType.Type.SPIKE:
+			_show_floating_text("SPIKE!", Color(1, 0, 0), 1.5)
 		_handle_game_over()
 	else:
 		# Calculate score gained for floating text
 		var new_score = game_controller.get_current_score()
 		var score_gain = new_score - prev_score
 		var new_combo = game_controller.get_consecutive_success()
+
+		# Show obstacle feedback
+		if had_obstacle:
+			match obstacle_type:
+				ObstacleType.Type.CRACK:
+					_show_floating_text("CRACK! -50%", Color(1, 1, 0))
+				ObstacleType.Type.ICE:
+					_show_floating_text("ICE! Combo Lost", Color(0, 1, 1))
 
 		# Show floating text feedback
 		if score_gain > 0:
@@ -170,10 +188,44 @@ func _create_stair_visual(stair: Stair, visual_index: int):
 
 	stair_container.add_child(stair_node)
 
+	# Add obstacle visual if present
+	if stair.has_obstacle():
+		_add_obstacle_visual(stair_node, stair.obstacle)
+
 	# Spawn animation: scale from 0 to 1 with bounce
 	stair_node.scale = Vector2(0, 0)
 	var tween = create_tween()
 	tween.tween_property(stair_node, "scale", Vector2(1, 1), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _add_obstacle_visual(parent: ColorRect, obstacle):
+	const ObstacleType = preload("res://src/core/obstacle/obstacle_type.gd")
+
+	# Create obstacle indicator
+	var obstacle_icon = ColorRect.new()
+	obstacle_icon.custom_minimum_size = Vector2(20, 20)
+	obstacle_icon.size = Vector2(20, 20)
+	obstacle_icon.position = Vector2(40, 10)  # Center of stair
+
+	# Color and pattern based on obstacle type
+	match obstacle.type:
+		ObstacleType.Type.CRACK:
+			# Yellow warning pattern (score penalty)
+			obstacle_icon.color = Color(1, 1, 0, 0.8)
+		ObstacleType.Type.ICE:
+			# Cyan ice pattern (combo break)
+			obstacle_icon.color = Color(0, 1, 1, 0.8)
+		ObstacleType.Type.SPIKE:
+			# Red danger pattern (game over)
+			obstacle_icon.color = Color(1, 0, 0, 0.9)
+
+	parent.add_child(obstacle_icon)
+
+	# Add pulsing animation for visibility
+	var tween = create_tween()
+	tween.set_loops()
+	tween.tween_property(obstacle_icon, "modulate:a", 0.5, 0.5)
+	tween.tween_property(obstacle_icon, "modulate:a", 1.0, 0.5)
 
 
 func _handle_game_over():

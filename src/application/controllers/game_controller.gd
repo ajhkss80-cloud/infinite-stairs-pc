@@ -59,6 +59,7 @@ func start_game(difficulty: int) -> void:
 
 	# Reset generator and create first stair
 	_stair_generator.reset()
+	_stair_generator.set_difficulty(difficulty)
 	_current_stair = _stair_generator.generate_next_stair()
 
 	# Start background music
@@ -84,6 +85,24 @@ func process_input(input_direction: int) -> void:
 	_stairs_climbed += 1
 	_consecutive_success += 1
 
+	# Check for obstacle on current stair
+	var obstacle_penalty = 1.0
+	if _current_stair.has_obstacle():
+		var obstacle = _current_stair.obstacle
+
+		# Check for game over obstacle (SPIKE)
+		if obstacle.causes_game_over():
+			_is_game_over = true
+			_sound_manager.play_sfx("game_over")
+			return
+
+		# Check for combo break (ICE)
+		if obstacle.breaks_combo():
+			_consecutive_success = 0  # Reset combo
+
+		# Apply score penalty (CRACK)
+		obstacle_penalty = obstacle.get_score_penalty()
+
 	# Play correct step sound
 	_sound_manager.play_sfx("correct_step")
 
@@ -100,7 +119,8 @@ func process_input(input_direction: int) -> void:
 		_current_difficulty
 	)
 
-	_current_score = stair_score
+	# Apply obstacle penalty to score
+	_current_score = stair_score * obstacle_penalty
 
 	# Generate next stair
 	_current_stair = _stair_generator.generate_next_stair()
