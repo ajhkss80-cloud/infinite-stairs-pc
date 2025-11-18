@@ -1,10 +1,89 @@
 ## StairGenerator
 ## 계단 생성 로직을 담당하는 클래스
-## TDD: 테스트 코드를 먼저 작성한 후 구현할 것
+## Pure GDScript - No Godot Node dependencies
 
 class_name StairGenerator
 
-# TODO: Implement stair generation logic
-# - Generate next stair with random direction
-# - Prevent too many consecutive same directions
-# - Apply difficulty settings
+# ==================== Constants ====================
+
+const MAX_CONSECUTIVE_SAME_DIRECTION = 5
+
+
+# ==================== Internal State ====================
+
+## Current stair index
+var _current_index: int = 0
+
+## Last generated direction
+var _last_direction: int = -1
+
+## Count of consecutive stairs with same direction
+var _consecutive_count: int = 0
+
+## Random number generator
+var _rng: RandomNumberGenerator
+
+
+# ==================== Constructor ====================
+
+func _init() -> void:
+	_rng = RandomNumberGenerator.new()
+	_rng.randomize()
+
+
+# ==================== Public Methods ====================
+
+## Generate the next stair in the sequence
+## Returns a new Stair instance
+func generate_next_stair() -> Stair:
+	var direction = _determine_next_direction()
+	var stair = Stair.new(direction, _current_index)
+
+	# Update internal state
+	_update_state(direction)
+
+	return stair
+
+
+## Reset the generator to initial state
+func reset() -> void:
+	_current_index = 0
+	_last_direction = -1
+	_consecutive_count = 0
+
+
+## Set random seed for reproducible generation
+func set_random_seed(seed_value: int) -> void:
+	_rng.seed = seed_value
+
+
+# ==================== Private Methods ====================
+
+## Determine the next direction based on history and randomness
+func _determine_next_direction() -> int:
+	# If we've reached max consecutive, force opposite direction
+	if _consecutive_count >= MAX_CONSECUTIVE_SAME_DIRECTION:
+		return _get_opposite_direction(_last_direction)
+
+	# Otherwise, generate random direction
+	return _rng.randi_range(Direction.Side.LEFT, Direction.Side.RIGHT)
+
+
+## Get the opposite direction
+func _get_opposite_direction(direction: int) -> int:
+	if direction == Direction.Side.LEFT:
+		return Direction.Side.RIGHT
+	else:
+		return Direction.Side.LEFT
+
+
+## Update internal state after generating a stair
+func _update_state(direction: int) -> void:
+	# Check if same direction as last
+	if direction == _last_direction:
+		_consecutive_count += 1
+	else:
+		_consecutive_count = 1
+
+	_last_direction = direction
+	_current_index += 1
