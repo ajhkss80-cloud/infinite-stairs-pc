@@ -3,7 +3,7 @@
 
 extends Node2D
 
-signal game_over(final_score: float)
+signal game_over(final_score: float, high_score: float, is_new_high: bool)
 
 var game_controller: GameController
 var current_difficulty: int
@@ -124,5 +124,7 @@ func _create_stair_visual(stair: Stair, visual_index: int):
 func _handle_game_over():
 	set_process(false)
 	var final_score = game_controller.get_current_score()
+	var high_score = game_controller.get_high_score()
+	var is_new_high = game_controller.save_if_high_score()
 	await get_tree().create_timer(1.0).timeout
-	game_over.emit(final_score)
+	game_over.emit(final_score, high_score, is_new_high)

@@ -11,6 +11,7 @@ var _difficulty_config: DifficultyConfig
 var _stair_generator: StairGenerator
 var _score_calculator: ScoreCalculator
 var _stair_validator: StairValidator
+var _save_service: SaveService
 
 
 # ==================== Game State ====================
@@ -33,6 +34,7 @@ func _init() -> void:
 	_stair_generator = StairGenerator.new()
 	_score_calculator = ScoreCalculator.new()
 	_stair_validator = StairValidator.new()
+	_save_service = SaveService.new()
 
 
 # ==================== Public Methods ====================
@@ -131,3 +133,22 @@ func reset() -> void:
 	_elapsed_time = 0.0
 	_is_game_over = false
 	_current_stair = null
+
+
+## Get high score for current difficulty
+func get_high_score() -> float:
+	return _save_service.get_high_score(_current_difficulty)
+
+
+## Check if current score is a new high score
+func is_new_high_score() -> bool:
+	return _save_service.is_new_high_score(_current_difficulty, _current_score)
+
+
+## Save current score if it's a new high score
+## Returns true if saved, false otherwise
+func save_if_high_score() -> bool:
+	if is_new_high_score():
+		_save_service.save_high_score(_current_difficulty, _current_score)
+		return true
+	return false
